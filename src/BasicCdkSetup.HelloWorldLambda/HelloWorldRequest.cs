@@ -1,6 +1,4 @@
-﻿
-
-namespace BasicCdkSetup.HelloWorldLambda
+﻿namespace BasicCdkSetup.HelloWorldLambda
 {
     public class HelloWorldRequest
     {

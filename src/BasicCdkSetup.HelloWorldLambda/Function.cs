@@ -2,7 +2,6 @@
 
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.SystemTextJson.DefaultLambdaJsonSerializer))]
 
-
 namespace BasicCdkSetup.HelloWorldLambda
 {
     public class Function
