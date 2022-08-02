@@ -26,7 +26,7 @@ namespace BasicCdkSetup.HelloWorldLambda
         [Logging(LogEvent = true, ClearState = true)]
         public HelloWorldResponse FunctionHandler(HelloWorldRequest request, ILambdaContext context)
         {
-            Logger.LogInformation("This is an info log", new { name = request.Name, anotherArg = 123 });
+            Logger.LogInformation(new { Name = request.Name, SomeArg = 123 }, "This is a info level message");
             
             var message = request.Name == null ? "Hello World" : $"Hello {request.Name}";
             
