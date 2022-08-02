@@ -16,6 +16,10 @@ export class BasicCdkSetupStack extends Stack {
       functionName: `${this.stackName}-hello-world`,
       timeout: Duration.seconds(10),
       memorySize: 512,
+      environment: {
+        POWERTOOLS_SERVICE_NAME: "BasicCdkSetup.HelloWorld",
+        POWERTOOLS_LOG_LEVEL: "Information",
+      },
     });
   }
 }
