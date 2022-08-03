@@ -9,7 +9,7 @@
     "watch": "tsc -w",
     "test": "jest",
     "cdk": "cdk",
-    "package": "dotnet build ./src -c release",
+    "package": "dotnet build -c release",
     "synth": "cdk synth basic-cdk-setup-dev --profile basic-cdk-setup-dev",
     "deploy": "cdk deploy basic-cdk-setup-dev --profile basic-cdk-setup-dev --outputs-file outputs.json"
   },
