@@ -20,6 +20,24 @@ Install cdk packages
 npm i
 ```
 
+Create a `.env` file and add the following variables:
+
+```
+CDK_DEFAULT_ACCOUNT=<AWS ACCOUNT ID>
+CDK_DEFAULT_REGION=<AWS REGION>
+STACK_NAME=basic-cdk-setup-dev
+CLUSTER_NAME=basiccdksetupdevcluster
+DATABASE_NAME=basiccdksetupdevdatabase
+DATABASE_USERNAME=basiccdksetupdev
+DATABASE_INSTANCES=2
+```
+
+Create an instance profile called `basic-cdk-setup-dev`
+
+```
+aws configure --profile basic-cdk-setup-dev
+```
+
 ## Deploy
 
 First we need to build out dotnet code in release mode
