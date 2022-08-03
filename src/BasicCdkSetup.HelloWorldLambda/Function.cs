@@ -27,12 +27,15 @@ public class HelloWorldResponse
 public class Function
 {
     private readonly DatabaseCredentials _databaseCredentials;
+    private readonly string _proxyEndpoint;
 
     public Function()
     {
         var secrets = new AmazonSecretsManagerClient();
         var secretName = Environment.GetEnvironmentVariable("DATABASE_SECRET_NAME");
+        
         _databaseCredentials = secrets.GetDatabaseCredentials(secretName!).GetAwaiter().GetResult();
+        _proxyEndpoint = Environment.GetEnvironmentVariable("DATABASE_PROXY_ENDPOINT")!;
     }
     
     [Logging(LogEvent = true, ClearState = true)]
@@ -41,11 +44,9 @@ public class Function
         Logger.LogInformation(new { Name = request.Name, Nested = new { SomeArg = 1, AnotherArg = 2 } },
             "This is a info level message");
         
-        Logger.LogInformation(_databaseCredentials, "Database secret");
-        
         var builder = new MySqlConnectionStringBuilder
         {
-            Server = _databaseCredentials.Host,
+            Server = _proxyEndpoint,
             UserID = _databaseCredentials.Username,
             Password = _databaseCredentials.Password,
             Database = _databaseCredentials.DbName,

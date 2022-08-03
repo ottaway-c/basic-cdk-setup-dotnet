@@ -109,6 +109,21 @@ export class BasicCdkSetupStack extends cdk.Stack {
       (databaseCluster.node.findChild(`Instance${i}`) as rds.CfnDBInstance).addDependsOn(dbScalingConfigureTarget);
     }
 
+    const databaseProxy = databaseCluster.addProxy("DatabaseProxy", {
+      vpc: vpc,
+      vpcSubnets: {
+        subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
+      },
+      dbProxyName: this.stackName,
+      secrets: [secret],
+      iamAuth: false,
+      requireTLS: false,
+      borrowTimeout: cdk.Duration.seconds(30),
+      maxConnectionsPercent: 100,
+    });
+
+    databaseProxy.connections.allowFromAnyIpv4(ec2.Port.tcp(databaseCluster.clusterEndpoint.port));
+
     const helloWorldFunction = new lambda.Function(this, "HelloWorldFunction", {
       code: lambda.Code.fromAsset("./src/BasicCdkSetup.HelloWorldLambda/bin/Release/net6.0"),
       handler: "BasicCdkSetup.HelloWorldLambda::BasicCdkSetup.HelloWorldLambda.Function::FunctionHandler",
@@ -121,6 +136,7 @@ export class BasicCdkSetupStack extends cdk.Stack {
         POWERTOOLS_SERVICE_NAME: "BasicCdkSetup.HelloWorld",
         POWERTOOLS_LOG_LEVEL: "Information",
         DATABASE_SECRET_NAME: secret.secretName,
+        DATABASE_PROXY_ENDPOINT: databaseProxy.endpoint,
       },
       vpc: vpc,
       vpcSubnets: {
