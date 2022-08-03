@@ -12,3 +12,4 @@ cdk.out
 .vs
 src/**/bin
 src/**/obj
+.env

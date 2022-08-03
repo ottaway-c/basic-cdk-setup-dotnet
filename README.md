@@ -25,11 +25,11 @@ npm i
 First we need to build out dotnet code in release mode
 
 ```
-dotnet build .src/ -c release
+npm run package
 ```
 
 Now we should be ok to deploy
 
 ```
-cdk deploy
+npm run deploy
 ```
