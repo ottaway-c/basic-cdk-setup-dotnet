@@ -7,6 +7,7 @@ import * as logs from "aws-cdk-lib/aws-logs";
 import * as cr from "aws-cdk-lib/custom-resources";
 
 export interface BasicCdkSetupStackProps extends cdk.StackProps {
+  vpcId: string;
   clusterName: string;
   databaseName: string;
   databaseUsername: string;
@@ -17,22 +18,26 @@ export class BasicCdkSetupStack extends cdk.Stack {
   constructor(scope: constructs.Construct, id: string, props: BasicCdkSetupStackProps) {
     super(scope, id, props);
 
-    const vpc = new ec2.Vpc(this, "Vpc", {
-      natGateways: 0,
-      maxAzs: 2,
-      cidr: "10.0.0.0/16",
-      subnetConfiguration: [
-        {
-          cidrMask: 20,
-          name: "private",
-          subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
-        },
-      ],
+    const vpc = ec2.Vpc.fromLookup(this, "Vpc", {
+      vpcId: props.vpcId,
     });
 
-    vpc.addInterfaceEndpoint("SecretsManagerInterfaceEndpoint", {
-      service: ec2.InterfaceVpcEndpointAwsService.SECRETS_MANAGER,
-    });
+    // const vpc = new ec2.Vpc(this, "Vpc", {
+    //   natGateways: 0,
+    //   maxAzs: 2,
+    //   cidr: "10.0.0.0/16",
+    //   subnetConfiguration: [
+    //     {
+    //       cidrMask: 20,
+    //       name: "private",
+    //       subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
+    //     },
+    //   ],
+    // });
+
+    // vpc.addInterfaceEndpoint("SecretsManagerInterfaceEndpoint", {
+    //   service: ec2.InterfaceVpcEndpointAwsService.SECRETS_MANAGER,
+    // });
 
     const secret = new rds.DatabaseSecret(this, "DatabaseSecret", {
       username: props.databaseUsername,
@@ -72,8 +77,6 @@ export class BasicCdkSetupStack extends cdk.Stack {
       },
       preferredMaintenanceWindow: "Tue:00:15-Tue:00:45",
     });
-
-    databaseCluster.connections.allowFromAnyIpv4(ec2.Port.tcp(databaseCluster.clusterEndpoint.port));
 
     const dbScalingConfigure = new cr.AwsCustomResource(this, "DbScalingConfigure", {
       onCreate: {
@@ -122,14 +125,12 @@ export class BasicCdkSetupStack extends cdk.Stack {
       maxConnectionsPercent: 100,
     });
 
-    databaseProxy.connections.allowFromAnyIpv4(ec2.Port.tcp(databaseCluster.clusterEndpoint.port));
-
     const helloWorldFunction = new lambda.Function(this, "HelloWorldFunction", {
       code: lambda.Code.fromAsset("./src/BasicCdkSetup.HelloWorldLambda/bin/Release/net6.0"),
       handler: "BasicCdkSetup.HelloWorldLambda::BasicCdkSetup.HelloWorldLambda.Function::FunctionHandler",
+      functionName: `${this.stackName}-hello-world`,
       runtime: lambda.Runtime.DOTNET_6,
       architecture: lambda.Architecture.ARM_64,
-      functionName: `${this.stackName}-hello-world`,
       timeout: cdk.Duration.seconds(10),
       memorySize: 512,
       environment: {
@@ -144,6 +145,7 @@ export class BasicCdkSetupStack extends cdk.Stack {
       },
     });
 
+    databaseProxy.connections.allowFrom(helloWorldFunction, ec2.Port.tcp(3306));
     secret.grantRead(helloWorldFunction);
   }
 }

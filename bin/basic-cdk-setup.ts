@@ -10,6 +10,8 @@ const CDK_DEFAULT_ACCOUNT = get("CDK_DEFAULT_ACCOUNT").required().asString();
 const CDK_DEFAULT_REGION = get("CDK_DEFAULT_REGION").required().asString();
 const STACK_NAME = get("STACK_NAME").required().asString();
 
+const VPC_ID = get("VPC_ID").required().asString();
+
 const CLUSTER_NAME = get("CLUSTER_NAME").required().asString();
 const DATABASE_NAME = get("DATABASE_NAME").required().asString();
 const DATABASE_USERNAME = get("DATABASE_USERNAME").required().asString();
@@ -18,6 +20,7 @@ const DATABASE_INSTANCES = get("DATABASE_INSTANCES").required().asInt();
 const app = new cdk.App();
 
 new BasicCdkSetupStack(app, STACK_NAME, {
+  vpcId: VPC_ID,
   clusterName: CLUSTER_NAME,
   databaseName: DATABASE_NAME,
   databaseUsername: DATABASE_USERNAME,
