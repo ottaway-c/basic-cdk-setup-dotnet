@@ -1,4 +1,7 @@
-﻿using Amazon.Lambda.Core;
+﻿using System.Net;
+using System.Text.Json;
+using Amazon.Lambda.APIGatewayEvents;
+using Amazon.Lambda.Core;
 using Amazon.Lambda.Serialization.SystemTextJson;
 using Amazon.SecretsManager;
 using AWS.Lambda.Powertools.Logging;
@@ -39,9 +42,14 @@ public class Function
     }
     
     [Logging(LogEvent = true, ClearState = true)]
-    public async Task<HelloWorldResponse> FunctionHandler(HelloWorldRequest request, ILambdaContext context)
+    public async Task<APIGatewayProxyResponse> FunctionHandler(APIGatewayProxyRequest request, ILambdaContext context)
     {
-        Logger.LogInformation(new { Name = request.Name, Nested = new { SomeArg = 1, AnotherArg = 2 } },
+        var requestBody = new HelloWorldRequest
+        {
+            Name = "Cameron"
+        };
+
+        Logger.LogInformation(new { Name = requestBody.Name, Nested = new { SomeArg = 1, AnotherArg = 2 } },
             "This is a info level message");
         
         var builder = new MySqlConnectionStringBuilder
@@ -66,8 +74,16 @@ public class Function
             Logger.LogInformation(new { result = value },"Mysql says");
         }
 
-        var message = request.Name == null ? "Hello World" : $"Hello {request.Name}";
+        var message = requestBody.Name == null ? "Hello World" : $"Hello {requestBody.Name}";
 
-        return new HelloWorldResponse(message);
+        var responseBody = new HelloWorldResponse(message);
+
+        var response = new APIGatewayProxyResponse
+        {
+            StatusCode = (int)HttpStatusCode.OK,
+            Body = JsonSerializer.Serialize(responseBody)
+        };
+
+        return response;
     }
 }

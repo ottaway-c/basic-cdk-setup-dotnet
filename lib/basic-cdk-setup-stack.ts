@@ -5,9 +5,11 @@ import * as ec2 from "aws-cdk-lib/aws-ec2";
 import * as rds from "aws-cdk-lib/aws-rds";
 import * as logs from "aws-cdk-lib/aws-logs";
 import * as cr from "aws-cdk-lib/custom-resources";
+import * as apigateway from "aws-cdk-lib/aws-apigateway";
 
 export interface BasicCdkSetupStackProps extends cdk.StackProps {
   vpcId: string;
+  apiGatewayVpcEndpointId: string;
   clusterName: string;
   databaseName: string;
   databaseUsername: string;
@@ -21,23 +23,6 @@ export class BasicCdkSetupStack extends cdk.Stack {
     const vpc = ec2.Vpc.fromLookup(this, "Vpc", {
       vpcId: props.vpcId,
     });
-
-    // const vpc = new ec2.Vpc(this, "Vpc", {
-    //   natGateways: 0,
-    //   maxAzs: 2,
-    //   cidr: "10.0.0.0/16",
-    //   subnetConfiguration: [
-    //     {
-    //       cidrMask: 20,
-    //       name: "private",
-    //       subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
-    //     },
-    //   ],
-    // });
-
-    // vpc.addInterfaceEndpoint("SecretsManagerInterfaceEndpoint", {
-    //   service: ec2.InterfaceVpcEndpointAwsService.SECRETS_MANAGER,
-    // });
 
     const secret = new rds.DatabaseSecret(this, "DatabaseSecret", {
       username: props.databaseUsername,
@@ -147,5 +132,25 @@ export class BasicCdkSetupStack extends cdk.Stack {
 
     databaseProxy.connections.allowFrom(helloWorldFunction, ec2.Port.tcp(3306));
     secret.grantRead(helloWorldFunction);
+
+    const apiGatewayVpcEndpoint = ec2.InterfaceVpcEndpoint.fromInterfaceVpcEndpointAttributes(this, "VPC", {
+      port: 443,
+      vpcEndpointId: props.apiGatewayVpcEndpointId,
+    });
+
+    const api = new apigateway.RestApi(this, "api-gateway", {
+      restApiName: "cdk-demo-api",
+      endpointConfiguration: {
+        types: [apigateway.EndpointType.PRIVATE],
+        vpcEndpoints: [apiGatewayVpcEndpoint]
+      },
+      deployOptions: {
+        stageName: "RD",
+      },
+    });
+
+    api.root
+      .addResource("hello")
+      .addMethod("GET", new apigateway.LambdaIntegration(helloWorldFunction));
   }
 }
